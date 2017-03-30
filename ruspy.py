@@ -1,18 +1,16 @@
 #!/usr/bin/python
 
+from twilio.rest import TwilioRestClient
 import requests
 import time
 import webbrowser
 import os
 import json
 import sys
-from pytextbelt import Textbelt
 
-# Phone number: ie. 1234567890
-phone_num = '<PHONE NUMBER>'
 
 # Semester code: ie. 12017 or 92017
-semester = '<SEMESTER CODE>' 
+semester = '<SEMESTER #>' 
 
 # Campus code: ie. NB (New Brunswick), NK (Newark), CM (Camden)
 campus = '<CAMPUS CODE>'
@@ -20,6 +18,13 @@ campus = '<CAMPUS CODE>'
 # Grad. level code: ie. U (Undergraduate), G (Graduate)
 level = '<GRAD LEVEL>'
 
+# Twilio messaging setup
+ACCOUNT_SID = '<TWILIO SID>'
+AUTH_TOKEN = '<TWILIO TOKEN>'
+from_num = '<TWILIO NUM>'
+to_num = '<TO PHONE #>'
+
+client = TwilioRestClient(ACCOUNT_SID, AUTH_TOKEN)
 # Checks if the course section is open
 def checkSection(course, course_num, section_num):
     if course['courseNumber'] == course_num:
@@ -48,7 +53,6 @@ def message(subjects):
             
             for course in subject['courses']:
                 r = requests.get(url)
-                recipient = Textbelt.Recipient(phone_num, 'us')
 
                 if r.status_code == 200:
                     soc = r.json()
@@ -110,20 +114,13 @@ def message(subjects):
                 print webbrowser.error
 
             # Sends message to user
-            message = '\nCourses available!\nRegistration Link: ' + shortlink
+            client.messages.create(
+                to = to_num,
+                from_ = from_num,
+                body = '\nCourses available!\nRegistration Link: ' + shortlink,
+            )
 
-            response = recipient.send(message)
-            if response['success']:
-                print 'Message sent'
-            else:
-                print 'Message failed to send'
-                print 'Trying again in 2 minutes...'
-                time.sleep(120)
-                response = recipient.send(message)
-                if response['success']:
-                    print 'Message resent'
-                else:
-                    print 'Message failed to send'
+            print 'Message sent'
 
             # Stops script when no courses to watch
             if len(subjects) == 0:
@@ -392,5 +389,4 @@ print ''
 print 'Exitting Application...'
 print ''
 sys.exit()
-
 
